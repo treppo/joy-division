@@ -24,6 +24,7 @@
         dpr js/devicePixelRatio]
     (.scale ctx dpr dpr)
     (set! (.-lineWidth ctx) 2)
+    (set! (.-strokeStyle ctx) "white")
     ctx))
 
 (defn update-frequencies! []
