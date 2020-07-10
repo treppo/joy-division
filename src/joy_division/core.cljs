@@ -68,12 +68,18 @@
 (def point-xf (comp (map normalize) (map amplify) (map-indexed point) (map x-align)))
 
 
-(defn vertical-shift [points] (map (fn [{x :x, y :y}] {:x x, :y (- y y-step)}) points))
+(defn shift-line [points]
+  (loop [remaining points
+         acc (transient [])]
+    (if (empty? remaining)
+      (persistent! acc)
+      (recur (rest remaining)
+             (conj! acc (update-in (first remaining) [:y] - y-step))))))
 
-(defn shift-lines [lines] (map vertical-shift (take (- lines-count 1) lines)))
+(defn shift-lines [lines] (map shift-line (take (- lines-count 1) lines)))
 
 (defn update-loop
-  ([] (update-loop ()))
+  ([] (update-loop `()))
   ([previous]
    (let [new-line (into () point-xf (updated-frequencies))
          shifted (shift-lines previous)
