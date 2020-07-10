@@ -48,10 +48,10 @@
   (clear canvas-context)
   (doseq [points lines]
     (.beginPath canvas-context)
-    (.moveTo canvas-context (:x (first points)) (:y (first points)))
+    (.moveTo canvas-context (.-x (first points)) (.-y (first points)))
 
     (doseq [point (rest points)]
-      (.lineTo canvas-context (:x point) (:y point)))
+      (.lineTo canvas-context (.-x point) (.-y point)))
 
     (.stroke canvas-context)))
 
@@ -59,14 +59,16 @@
 
 (defn amplify [frequency] (* 128 frequency))
 
+(deftype Point [x y])
+
 (defn point [i frequency]
   (let [height (* y-step lines-count)]
-    {:x (* i step), :y (- height frequency)}))
+    (Point. (* i step) (- height frequency))))
 
-(defn x-align [{x :x, y :y}] {:x (+ x (/ step 2)), :y y})
+(defn x-align [point]
+  (Point. (+ (.-x point) (/ step 2)) (.-y point)))
 
 (def point-xf (comp (map normalize) (map amplify) (map-indexed point) (map x-align)))
-
 
 (defn shift-line [points]
   (loop [remaining points
@@ -74,7 +76,7 @@
     (if (empty? remaining)
       (persistent! acc)
       (recur (rest remaining)
-             (conj! acc (update-in (first remaining) [:y] - y-step))))))
+             (conj! acc (Point. (.-x (first remaining)) (- (.-y (first remaining)) y-step)))))))
 
 (defn shift-lines [lines] (map shift-line (take (- lines-count 1) lines)))
 
