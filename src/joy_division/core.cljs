@@ -61,11 +61,11 @@
 (defn draw-lines
   [lines]
   (clear canvas-context)
-  (doseq [points lines]
+  (doseq [[first-point & rest-points] lines]
     (.beginPath canvas-context)
-    (.moveTo canvas-context (.-x (first points)) (.-y (first points)))
+    (.moveTo canvas-context (.-x first-point) (.-y first-point))
 
-    (doseq [point (rest points)]
+    (doseq [point rest-points]
       (.lineTo canvas-context (.-x point) (.-y point)))
 
     (.stroke canvas-context)))
@@ -115,7 +115,7 @@
 
 
 (defn update-loop
-  ([] (update-loop `()))
+  ([] (js/requestAnimationFrame (fn [] (update-loop `()))))
   ([previous]
    (let [new-line (into () point-xf (updated-frequencies))
          shifted (shift-lines previous)
