@@ -1,6 +1,7 @@
 (ns joy-division.core
-  (:require [cljs.core.async :refer [go]]
-            [cljs.core.async.interop :refer-macros [<p!]]))
+  (:require
+    [cljs.core.async :refer [go]]
+    [cljs.core.async.interop :refer-macros [<p!]]))
 
 ;(enable-console-print!)
 
@@ -11,23 +12,31 @@
 (def step 10)
 
 (def audioContext (js/AudioContext.))
-(def analyser (let [a (.createAnalyser audioContext)]
-                (set! (.-fftSize a) resolution)
-                a))
 
-(defn frequency-bin-count [analyser]
+
+(def analyser
+  (let [a (.createAnalyser audioContext)]
+    (set! (.-fftSize a) resolution)
+    a))
+
+
+(defn frequency-bin-count
+  [analyser]
   "half of the analyser's fftSize"
   (.-frequencyBinCount analyser))
+
 
 (def canvas-dimension (* points-per-line step js/devicePixelRatio))
 
 (def frequency-uint-array (js/Uint8Array. (frequency-bin-count analyser)))
+
 
 (def canvas
   (let [element (js/document.querySelector "canvas")]
     (set! (.-width element) canvas-dimension)
     (set! (.-height element) canvas-dimension)
     element))
+
 
 (def canvas-context
   (let [ctx (.getContext canvas "2d")
@@ -37,14 +46,20 @@
     (set! (.-strokeStyle ctx) "white")
     ctx))
 
-(defn updated-frequencies []
+
+(defn updated-frequencies
+  []
   (.getByteTimeDomainData analyser frequency-uint-array)
   (js/Array.prototype.slice.call frequency-uint-array))
 
-(defn clear [context]
+
+(defn clear
+  [context]
   (.clearRect context 0 0 (.-width (.-canvas context)) (.-height (.-canvas context))))
 
-(defn draw-lines [lines]
+
+(defn draw-lines
+  [lines]
   (clear canvas-context)
   (doseq [points lines]
     (.beginPath canvas-context)
@@ -55,22 +70,37 @@
 
     (.stroke canvas-context)))
 
-(defn normalize [integer] (/ integer 256))
 
-(defn amplify [frequency] (* 128 frequency))
+(defn normalize
+  [integer]
+  (/ integer 256))
 
-(deftype Point [x y])
 
-(defn point [i frequency]
+(defn amplify
+  [frequency]
+  (* 128 frequency))
+
+
+(deftype Point
+  [x y])
+
+
+(defn point
+  [i frequency]
   (let [height (* y-step lines-count)]
     (Point. (* i step) (- height frequency))))
 
-(defn x-align [point]
+
+(defn x-align
+  [point]
   (Point. (+ (.-x point) (/ step 2)) (.-y point)))
+
 
 (def point-xf (comp (map normalize) (map amplify) (map-indexed point) (map x-align)))
 
-(defn shift-line [points]
+
+(defn shift-line
+  [points]
   (loop [remaining points
          acc (transient [])]
     (if (empty? remaining)
@@ -78,7 +108,11 @@
       (recur (rest remaining)
              (conj! acc (Point. (.-x (first remaining)) (- (.-y (first remaining)) y-step)))))))
 
-(defn shift-lines [lines] (map shift-line (take (- lines-count 1) lines)))
+
+(defn shift-lines
+  [lines]
+  (map shift-line (take (- lines-count 1) lines)))
+
 
 (defn update-loop
   ([] (update-loop `()))
@@ -87,6 +121,7 @@
          shifted (shift-lines previous)
          lines (conj shifted new-line)]
      (js/requestAnimationFrame (fn [] (draw-lines lines) (update-loop lines))))))
+
 
 (go
   (let [stream (<p! (js/navigator.mediaDevices.getUserMedia #js {:audio true}))
