@@ -4,7 +4,7 @@
     [cljs.core.async.interop :refer-macros [<p!]]))
 
 
-;(enable-console-print!)
+;; (enable-console-print!)
 
 (def lines-count 32)
 (def points-per-line 32)
@@ -13,8 +13,8 @@
 (def resolution (* step points-per-line 2))
 (def width (* points-per-line step))
 (def height (+ 20 (* lines-count y-step)))
-(def amplification 1)
-(def margin 30)
+(def amplification 20)
+(def margin 10)
 (def line-width 2)
 
 
@@ -92,7 +92,7 @@
         distance-to-center (Math/abs (- x (/ width 2)))
         variance (- (/ width 2) distance-to-center)
         framed (max (- variance margin) 0)]
-    (* (* amplification frequency) framed)))
+    (* (* amplification frequency) (/ framed amplification))))
 
 
 (defn point
