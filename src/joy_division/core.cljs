@@ -15,7 +15,12 @@
 (def height (* lines-count y-step))
 (def amplification 100)
 (def margin 30)
-(def audioContext (js/AudioContext.))
+
+
+(def audioContext
+  (if (js-in "webkitAudioContext" js/window)
+    (js/webkitAudioContext.)
+    (js/AudioContext.)))
 
 
 (def analyser
@@ -81,7 +86,9 @@
   [x y])
 
 
-(defn normalized [frequency] (/ (Math/abs (- frequency 128)) 256))
+(defn normalized
+  [frequency]
+  (/ (Math/abs (- frequency 128)) 256))
 
 
 (defn variance
@@ -92,7 +99,9 @@
     (* (* amplification frequency) variance)))
 
 
-(defn point [i frequency] (Point. (* step i) (- height frequency)))
+(defn point
+  [i frequency]
+  (Point. (* step i) (- height frequency)))
 
 
 (defn x-align
