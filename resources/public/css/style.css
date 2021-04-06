@@ -8,3 +8,17 @@ body {
 canvas {
     margin: 0 auto;
 }
+
+#start {
+    font-size: 50px;
+    color: white;
+    background-color: black;
+    border: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+}
+
+#start:hover {
+    cursor: pointer;
+}

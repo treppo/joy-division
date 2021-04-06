@@ -17,14 +17,16 @@
 (def margin 30)
 
 
-(def audioContext
+(defn create-audio-context
+  []
   (if (js-in "webkitAudioContext" js/window)
     (js/webkitAudioContext.)
     (js/AudioContext.)))
 
 
-(defn create-analyser []
-  (let [a (.createAnalyser audioContext)]
+(defn create-analyser
+  [audio-context]
+  (let [a (.createAnalyser audio-context)]
     (set! (.-fftSize a) resolution)
     a))
 
@@ -144,9 +146,25 @@
          (update-loop lines frequencies-fn))))))
 
 
-(go
-  (let [stream (<p! (js/navigator.mediaDevices.getUserMedia #js {:audio true}))
-        source (.createMediaStreamSource audioContext stream)
-        analyser (create-analyser)]
-    (.connect source analyser)
-    (update-loop (fn [] (updated-frequencies analyser)))))
+(defn start
+  []
+  (go
+    (let [stream (<p! (js/navigator.mediaDevices.getUserMedia #js {:audio true}))
+          audio-context (create-audio-context)
+          source (.createMediaStreamSource audio-context stream)
+          analyser (create-analyser audio-context)]
+      (.connect source analyser)
+      (update-loop (fn [] (updated-frequencies analyser))))))
+
+
+(defn main
+  []
+  (.addEventListener
+    (js/document.querySelector "#start")
+    "click"
+    (fn [event]
+      (.remove (.-target event))
+      (start))))
+
+
+(main)
