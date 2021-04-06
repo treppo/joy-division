@@ -165,7 +165,6 @@
     "click"
     (fn [event]
       (.remove (.-target event))
-      (js/document.documentElement.requestFullscreen)
       (start))))
 
 
