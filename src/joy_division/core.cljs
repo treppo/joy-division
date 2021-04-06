@@ -13,7 +13,7 @@
 (def resolution (* step points-per-line 2))
 (def width (* points-per-line step))
 (def height (* lines-count y-step))
-(def amplification 100)
+(def amplification 50)
 (def margin 30)
 
 
@@ -95,7 +95,7 @@
   [i frequency]
   (let [x (* step i)
         distance-to-center (Math/abs (- x (/ width 2)))
-        variance (/ (max (- (/ width 2) 25 distance-to-center) 0) 8)]
+        variance (/ (max (- (/ width 2) margin distance-to-center) 0) 8)]
     (* (* amplification frequency) variance)))
 
 
@@ -114,7 +114,12 @@
   (if (zero? (mod index step)) point))
 
 
-(def point-xf (comp (keep-indexed when-at-step) (map normalized) (map-indexed variance) (map-indexed point) (map x-align)))
+(def point-xf
+  (comp (keep-indexed when-at-step)
+        (map normalized)
+        (map-indexed variance)
+        (map-indexed point)
+        (map x-align)))
 
 
 (defn shift-line
@@ -124,7 +129,9 @@
     (if (empty? remaining)
       (persistent! acc)
       (recur (rest remaining)
-             (conj! acc (Point. (.-x (first remaining)) (- (.-y (first remaining)) y-step)))))))
+             (conj! acc
+                    (Point. (.-x (first remaining))
+                            (- (.-y (first remaining)) y-step)))))))
 
 
 (defn shift-lines
@@ -138,7 +145,10 @@
    (let [new-line (into () point-xf (updated-frequencies))
          shifted (shift-lines previous)
          lines (conj shifted new-line)]
-     (js/requestAnimationFrame (fn [] (draw-lines (reverse lines)) (update-loop lines))))))
+     (js/requestAnimationFrame
+       (fn []
+         (draw-lines (reverse lines))
+         (update-loop lines))))))
 
 
 (go
