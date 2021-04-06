@@ -13,7 +13,7 @@
 (def resolution (* step points-per-line 2))
 (def width (* points-per-line step))
 (def height (* lines-count y-step))
-(def amplification 50)
+(def amplification 1)
 (def margin 30)
 
 
@@ -91,12 +91,13 @@
   (/ (Math/abs (- frequency 128)) 256))
 
 
-(defn variance
+(defn shaped
   [i frequency]
   (let [x (* step i)
         distance-to-center (Math/abs (- x (/ width 2)))
-        variance (/ (max (- (/ width 2) margin distance-to-center) 0) 8)]
-    (* (* amplification frequency) variance)))
+        variance (- (/ width 2) distance-to-center)
+        framed (max (- variance margin) 0)]
+    (* (* amplification frequency) framed)))
 
 
 (defn point
@@ -117,7 +118,7 @@
 (def point-xf
   (comp (keep-indexed when-at-step)
         (map normalized)
-        (map-indexed variance)
+        (map-indexed shaped)
         (map-indexed point)
         (map x-align)))
 
