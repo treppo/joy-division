@@ -12,7 +12,7 @@
 (def step 8)
 (def resolution (* step points-per-line 2))
 (def width (* points-per-line step))
-(def height (* lines-count y-step))
+(def height (+ 20 (* lines-count y-step)))
 (def amplification 1)
 (def margin 30)
 (def line-width 2)
