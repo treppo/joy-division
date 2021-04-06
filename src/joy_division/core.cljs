@@ -4,7 +4,7 @@
     [cljs.core.async.interop :refer-macros [<p!]]))
 
 
-;; (enable-console-print!)
+(enable-console-print!)
 
 (def lines-count 32)
 (def points-per-line 32)
@@ -160,12 +160,17 @@
 
 (defn main
   []
-  (.addEventListener
-    (js/document.querySelector "#start")
-    "click"
-    (fn [event]
-      (.remove (.-target event))
-      (start))))
+  (.addEventListener (js/document.querySelector "p") "click"
+                     (fn [event]
+                       (.remove (.-target event))
+                       (start)))
+  (.addEventListener js/document "keypress"
+                     (fn [event]
+                       (when (or (= (.-key event) "Enter") (= (.-key event) " "))
+                         (js/document.documentElement.requestFullscreen))))
+  (.addEventListener js/document "dblclick"
+                     (fn [event]
+                       (js/document.documentElement.requestFullscreen))))
 
 
 (main)
