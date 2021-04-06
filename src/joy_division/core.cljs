@@ -15,6 +15,7 @@
 (def height (* lines-count y-step))
 (def amplification 1)
 (def margin 30)
+(def line-width 2)
 
 
 (defn create-audio-context
@@ -42,7 +43,7 @@
   (let [ctx (.getContext canvas "2d")
         dpr js/devicePixelRatio]
     (.scale ctx dpr dpr)
-    (set! (.-lineWidth ctx) 2)
+    (set! (.-lineWidth ctx) line-width)
     (set! (.-strokeStyle ctx) "white")
     ctx))
 
@@ -64,10 +65,10 @@
   (clear canvas-context)
   (doseq [[first-point & rest-points] lines]
     (.beginPath canvas-context)
-    (.moveTo canvas-context (.-x first-point) (.-y first-point))
+    (.moveTo canvas-context (.-x first-point) (- (.-y first-point) (/ line-width 2)))
 
     (doseq [point rest-points]
-      (.lineTo canvas-context (.-x point) (.-y point)))
+      (.lineTo canvas-context (.-x point) (- (.-y point) (/ line-width 2))))
 
     (.save canvas-context)
     (set! (.-globalCompositeOperation canvas-context) "destination-out")
