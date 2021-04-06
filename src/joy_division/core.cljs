@@ -23,19 +23,10 @@
     (js/AudioContext.)))
 
 
-(def analyser
+(defn create-analyser []
   (let [a (.createAnalyser audioContext)]
     (set! (.-fftSize a) resolution)
     a))
-
-
-(defn frequency-bin-count
-  [analyser]
-  "half of the analyser's fftSize"
-  (.-frequencyBinCount analyser))
-
-
-(def frequency-uint-array (js/Uint8Array. (frequency-bin-count analyser)))
 
 
 (def canvas
@@ -55,9 +46,10 @@
 
 
 (defn updated-frequencies
-  []
-  (.getByteTimeDomainData analyser frequency-uint-array)
-  (js/Array.prototype.slice.call frequency-uint-array))
+  [analyser]
+  (let [frequency-array (js/Uint8Array. (.-frequencyBinCount analyser))]
+    (.getByteTimeDomainData analyser frequency-array)
+    (js/Array.prototype.slice.call frequency-array)))
 
 
 (defn clear
@@ -141,19 +133,20 @@
 
 
 (defn update-loop
-  ([] (js/requestAnimationFrame (fn [] (update-loop []))))
-  ([previous]
-   (let [new-line (into () point-xf (updated-frequencies))
+  ([frequencies-fn] (js/requestAnimationFrame (fn [] (update-loop [] frequencies-fn))))
+  ([previous frequencies-fn]
+   (let [new-line (into () point-xf (frequencies-fn))
          shifted (shift-lines previous)
          lines (conj shifted new-line)]
      (js/requestAnimationFrame
        (fn []
          (draw-lines (reverse lines))
-         (update-loop lines))))))
+         (update-loop lines frequencies-fn))))))
 
 
 (go
   (let [stream (<p! (js/navigator.mediaDevices.getUserMedia #js {:audio true}))
-        source (.createMediaStreamSource audioContext stream)]
+        source (.createMediaStreamSource audioContext stream)
+        analyser (create-analyser)]
     (.connect source analyser)
-    (update-loop)))
+    (update-loop (fn [] (updated-frequencies analyser)))))
