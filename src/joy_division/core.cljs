@@ -8,12 +8,13 @@
 
 (def lines-count 32)
 (def points-per-line 32)
-(def resolution (* lines-count points-per-line))
 (def y-step 10)
-(def step 10)
+(def step 8)
+(def resolution (* step points-per-line 2))
 (def width (* points-per-line step))
 (def height (* lines-count y-step))
-(def margin 25)
+(def amplification 100)
+(def margin 30)
 (def audioContext (js/AudioContext.))
 
 
@@ -80,15 +81,18 @@
   [x y])
 
 
-(defn point
+(defn normalized [frequency] (/ (Math/abs (- frequency 128)) 256))
+
+
+(defn variance
   [i frequency]
   (let [x (* step i)
         distance-to-center (Math/abs (- x (/ width 2)))
-        variance (max (- (/ width 2) 25 distance-to-center) 0)
-        normalized-frequency (Math/abs (- frequency 128))
-        frequency-variation (* (/ normalized-frequency 4) (/ variance 8))
-        y (- height frequency-variation)]
-    (Point. x y)))
+        variance (/ (max (- (/ width 2) 25 distance-to-center) 0) 8)]
+    (* (* amplification frequency) variance)))
+
+
+(defn point [i frequency] (Point. (* step i) (- height frequency)))
 
 
 (defn x-align
@@ -101,7 +105,7 @@
   (if (zero? (mod index step)) point))
 
 
-(def point-xf (comp (keep-indexed when-at-step) (map-indexed point) (map x-align)))
+(def point-xf (comp (keep-indexed when-at-step) (map normalized) (map-indexed variance) (map-indexed point) (map x-align)))
 
 
 (defn shift-line
