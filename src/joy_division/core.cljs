@@ -3,14 +3,17 @@
     [cljs.core.async :refer [go]]
     [cljs.core.async.interop :refer-macros [<p!]]))
 
-;(enable-console-print!)
+
+;; (enable-console-print!)
 
 (def lines-count 32)
 (def points-per-line 32)
-(def resolution (* lines-count points-per-line 2))
+(def resolution (* lines-count points-per-line))
 (def y-step 10)
 (def step 10)
-
+(def width (* points-per-line step))
+(def height (* lines-count y-step))
+(def margin 25)
 (def audioContext (js/AudioContext.))
 
 
@@ -26,15 +29,13 @@
   (.-frequencyBinCount analyser))
 
 
-(def canvas-dimension (* points-per-line step js/devicePixelRatio))
-
 (def frequency-uint-array (js/Uint8Array. (frequency-bin-count analyser)))
 
 
 (def canvas
   (let [element (js/document.querySelector "canvas")]
-    (set! (.-width element) canvas-dimension)
-    (set! (.-height element) canvas-dimension)
+    (set! (.-width element) (* width js/devicePixelRatio))
+    (set! (.-height element) (* height js/devicePixelRatio))
     element))
 
 
@@ -68,17 +69,11 @@
     (doseq [point rest-points]
       (.lineTo canvas-context (.-x point) (.-y point)))
 
+    (.save canvas-context)
+    (set! (.-globalCompositeOperation canvas-context) "destination-out")
+    (.fill canvas-context)
+    (.restore canvas-context)
     (.stroke canvas-context)))
-
-
-(defn normalize
-  [integer]
-  (/ integer 256))
-
-
-(defn amplify
-  [frequency]
-  (* 128 frequency))
 
 
 (deftype Point
@@ -87,8 +82,13 @@
 
 (defn point
   [i frequency]
-  (let [height (* y-step lines-count)]
-    (Point. (* i step) (- height frequency))))
+  (let [x (* step i)
+        distance-to-center (Math/abs (- x (/ width 2)))
+        variance (max (- (/ width 2) 25 distance-to-center) 0)
+        normalized-frequency (Math/abs (- frequency 128))
+        frequency-variation (* (/ normalized-frequency 4) (/ variance 8))
+        y (- height frequency-variation)]
+    (Point. x y)))
 
 
 (defn x-align
@@ -96,7 +96,12 @@
   (Point. (+ (.-x point) (/ step 2)) (.-y point)))
 
 
-(def point-xf (comp (map normalize) (map amplify) (map-indexed point) (map x-align)))
+(defn when-at-step
+  [index point]
+  (if (zero? (mod index step)) point))
+
+
+(def point-xf (comp (keep-indexed when-at-step) (map-indexed point) (map x-align)))
 
 
 (defn shift-line
@@ -115,12 +120,12 @@
 
 
 (defn update-loop
-  ([] (js/requestAnimationFrame (fn [] (update-loop `()))))
+  ([] (js/requestAnimationFrame (fn [] (update-loop []))))
   ([previous]
    (let [new-line (into () point-xf (updated-frequencies))
          shifted (shift-lines previous)
          lines (conj shifted new-line)]
-     (js/requestAnimationFrame (fn [] (draw-lines lines) (update-loop lines))))))
+     (js/requestAnimationFrame (fn [] (draw-lines (reverse lines)) (update-loop lines))))))
 
 
 (go
