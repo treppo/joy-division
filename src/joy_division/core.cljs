@@ -11,8 +11,16 @@
 (def amplification 20)
 (def margin 10)
 (def line-width 2)
-(defn window-width [] (.-innerWidth js/window))
-(defn window-height [] (.-innerHeight js/window))
+
+
+(defn window-width
+  []
+  (.-innerWidth js/window))
+
+
+(defn window-height
+  []
+  (.-innerHeight js/window))
 
 
 (defn resolution
@@ -23,8 +31,14 @@
     (Math/pow 2 (- fitting-exponent 1))))
 
 
-(defn points-per-line [] (/ (resolution) js/devicePixelRatio step))
-(defn width [] (* (points-per-line) step))
+(defn points-per-line
+  []
+  (/ (resolution) js/devicePixelRatio step))
+
+
+(defn width
+  []
+  (* (points-per-line) step))
 
 
 (defn lines-count
@@ -32,7 +46,9 @@
   (/ (Math/floor (/ (- (window-height) (* js/devicePixelRatio top-padding) bottom-margin) y-step)) js/devicePixelRatio))
 
 
-(defn height [] (+ top-padding (* (lines-count) y-step)))
+(defn height
+  []
+  (+ top-padding (* (lines-count) y-step)))
 
 
 (defn init-config
@@ -202,7 +218,9 @@
                          (js/document.documentElement.requestFullscreen))))
   (.addEventListener js/document "dblclick"
                      (fn [event]
-                       (js/document.documentElement.requestFullscreen))))
+                       (if (js-in "webkitRequestFullscreen" js/document.documentElement)
+                         (js/document.documentElement.webkitRequestFullscreen)
+                         (js/document.documentElement.requestFullscreen)))))
 
 
 (main)
