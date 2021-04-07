@@ -7,10 +7,16 @@
 ;; (enable-console-print!)
 
 (def lines-count 32)
-(def points-per-line 32)
 (def y-step 10)
 (def step 8)
-(def resolution (* step points-per-line 2))
+(def window-width (.-innerWidth js/window))
+
+
+(def resolution
+  "has to be power of two"
+  (let [fitting-exponent (Math/floor (/ (Math/log window-width) (Math/log 2)))]
+    (Math/pow 2 (- fitting-exponent 1))))                   ; decrement exponent to for the graph to be portrait
+(def points-per-line (/ resolution 2 step))
 (def width (* points-per-line step))
 (def height (+ 20 (* lines-count y-step)))
 (def amplification 20)
